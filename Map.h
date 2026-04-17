@@ -23,7 +23,7 @@ public:
     void print() const;                 //imprime mapa en pantalla
     void print(std::vector<std::pair<int,int>>) const; //imprime el mapa y el camino encontrado 
 
-    friend bool operator==(const Map& lhs, const Map& rhs); //declara operador global de igualdad para comparar dos mapas
+    friend bool operator==(const Map& lhs, const Map& rhs); //se declara un operador global de igualdad para comparar dos mapas
     friend class Search;                //para acceder a los miembros de Map desde Search sin necesidad de getters
 };
 

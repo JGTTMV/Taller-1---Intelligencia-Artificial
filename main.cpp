@@ -6,7 +6,7 @@
 
 int main(int argc, char *argv[])
 {
-    //Verificacion basica de argumentos (archivo y coordenadas)
+    //verificacion basica de argumentos (archivo y coordenadas)
     if (argc != 6) 
     {
         std::cerr << "Error: Argumentos insuficientes." << std::endl;
@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    //Convierte argumentos de coordenadas a enteros
+    //convierte argumentos de coordenadas a enteros
     int start_x = std::stoi(argv[2]);
     int start_y = std::stoi(argv[3]);
     int goal_x = std::stoi(argv[4]);
@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 
         std::vector<std::pair<int, int>> path;
 
-        switch (opcion) //Cada opcion ejecuta un algoritmo distinto
+        switch (opcion) //cada opcion ejecuta un algoritmo distinto
         {
             case 1:
                 std::cout << "Nuevo Inicio (x y): "; std::cin >> start_x >> start_y;

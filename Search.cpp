@@ -22,6 +22,13 @@ namespace std
 	};
 }
 
+//Actualiza el vector de direcciones para incluir diagonales
+std::vector<std::pair<int, int>> dirs = 
+{
+    {0, 1}, {0, -1}, {1, 0}, {-1, 0},   // Ortogonales
+    {1, 1}, {1, -1}, {-1, 1}, {-1, -1}  // Diagonales
+};
+
 std::vector<std::pair<int,int>> Search::reconstruct(const std::unordered_map<std::pair<int,int>,std::pair<int,int>> &pathCache, const std::pair<int,int> &start){
 	std::deque<std::pair<int,int>> nodes;
 	auto node = start;  //crea una copia
@@ -44,6 +51,7 @@ std::vector<std::pair<int,int>> Search::reconstruct(const std::unordered_map<std
     return vec;
 }
 
+//1. Implementacion de BFS (Breadth-First Search)
 std::vector<std::pair<int,int>> Search::BFS(const Map& map, std::pair<int,int> start, std::pair<int,int> goal)
 {
     std::cout<<"===========================\nRunning BFS...\n";
@@ -57,7 +65,7 @@ std::vector<std::pair<int,int>> Search::BFS(const Map& map, std::pair<int,int> s
     std::queue<std::pair<int,int>> OPEN;
     std::unordered_map<std::pair<int,int>,std::pair<int,int>> pathCache;    //guarda de donde viene cada nodo para poder reconstruir el camino al final
 
-    //inserta el nodo inicial en la cola y márcalo como visitado
+    //inserta el nodo inicial en la cola y marcalo como visitado
     OPEN.push(start);
     visited[start.first][start.second]=true;
 
@@ -125,21 +133,21 @@ std::vector<std::pair<int,int>> Search::BFS(const Map& map, std::pair<int,int> s
     return path;
 }
 
-// 1. Implementacion de la Heuristica (Distancia Manhattan)
+//Implementacion de la Heuristica (Distancia Manhattan)
 float Search::Heuristic(std::pair<int, int> start, std::pair<int, int> goal) 
 {
     //Distancia Manhattan = |x1 - x2| + |y1 - y2|
     return std::abs(start.first - goal.first) + std::abs(start.second - goal.second);
 }
 
-// 2. Estructura auxiliar para la Priority Queue (Cola de prioridad)
+//estructura auxiliar para la Priority Queue (Cola de prioridad)
 //esto nos permite guardar la posicion y su valor heuristico juntos.
 struct NodeRecord 
 {
     std::pair<int, int> pos;
     float h;
     
-    //sobrecargamos el operador '>' para que la Priority Queue actue como un Min-Heap
+    //se sobrecarga el operador '>' para que la Priority Queue actue como un Min-Heap
     //(es decir, que el nodo con la MENOR heuristica este siempre en la cima)
     bool operator>(const NodeRecord& other) const 
     {
@@ -170,7 +178,7 @@ std::vector<std::pair<int, int>> Search::Greedy(const Map& map, std::pair<int, i
         OPEN.pop();
         std::pair<int,int> pos = currentRecord.pos;
 
-        //si llegamos a la meta
+        //si se llega a la meta
         if(pos == goal)
         {
             auto endTime = std::chrono::high_resolution_clock::now();
@@ -196,14 +204,14 @@ std::vector<std::pair<int, int>> Search::Greedy(const Map& map, std::pair<int, i
             child.first += dir.first;
             child.second += dir.second;
             
-            //si las coordenadas son invalidas, si es un muro (1), o si ya fue visitado, lo ignoramos
+            //si las coordenadas son invalidas, si es un muro (1) o si ya fue visitado, se ignora
             if(!map.isValidCordinates(child.first, child.second) || 
                map._map[child.first][child.second] == 1 || 
                visited[child.first][child.second]){
                 continue;
             }
             
-            //lo marcamos como visitado, guardamos de donde viene y lo metemos a la cola
+            //se marca como visitado, guardamos de donde viene y lo metemos a la cola
             visited[child.first][child.second] = true;
             pathCache[child] = pos;
             OPEN.push({child, Heuristic(child, goal)});
@@ -213,10 +221,14 @@ std::vector<std::pair<int, int>> Search::Greedy(const Map& map, std::pair<int, i
     return {};
 }
 
+// 4. Implementación del Algoritmo A*
 std::vector<std::pair<int, int>> Search::AStar(const Map& map, std::pair<int, int> start, std::pair<int, int> goal) {
+    
+    //inicia medicion de tiempo
     auto startTime = std::chrono::high_resolution_clock::now();
 
-    struct AStarNode {
+    struct AStarNode 
+    {
         std::pair<int, int> pos;
         float g, f;
         bool operator>(const AStarNode& other) const { return f > other.f; }
@@ -229,32 +241,39 @@ std::vector<std::pair<int, int>> Search::AStar(const Map& map, std::pair<int, in
     OPEN.push({start, 0.0f, Heuristic(start, goal)});
     g_costs[start] = 0.0f;
 
-    // 8 Direcciones: Ortogonales y Diagonales
-    std::vector<std::pair<int, int>> dirs = {
-        {0, 1}, {0, -1}, {1, 0}, {-1, 0},   // Ortogonales
-        {1, 1}, {1, -1}, {-1, 1}, {-1, -1}  // Diagonales
-    };
+    std::vector<std::pair<int, int>> dirs = {{0,1},{0,-1},{1,0},{-1,0},{1,1},{1,-1},{-1,1},{-1,-1}};
 
-    while (!OPEN.empty()) {
+    while (!OPEN.empty()) 
+    {
         AStarNode current = OPEN.top();
         OPEN.pop();
 
-        if (current.pos == goal) {
+        if (current.pos == goal) 
+        {
+            //finaliza medicion al encontrar la meta
             auto endTime = std::chrono::high_resolution_clock::now();
+            double duration = std::chrono::duration<double, std::milli>(endTime - startTime).count();
+            
+            std::cout << "\n[A*] Resultados:" << std::endl;
+            std::cout << "- Tiempo de ejecucion: " << duration << " ms" << std::endl;
+            std::cout << "- Costo total (G): " << g_costs[goal] << std::endl;
+            
             return reconstruct(pathCache, goal);
         }
 
-        for (auto dir : dirs) {
+        for (auto dir : dirs) 
+        {
             std::pair<int, int> neighbor = {current.pos.first + dir.first, current.pos.second + dir.second};
 
             if (!map.isValidCordinates(neighbor.first, neighbor.second) || map._map[neighbor.first][neighbor.second] == 1)
                 continue;
 
-            // Determinar costo: 1.0 si es recto, 1.41 si es diagonal
-            float moveCost = (dir.first != 0 && dir.second != 0) ? 1.414f : 1.0f;
+            //costo diferenciado: 1.0 recto, 1.41 diagonal
+            float moveCost = (dir.first != 0 && dir.second != 0) ? 1.4142f : 1.0f;
             float tentative_g = g_costs[current.pos] + moveCost;
 
-            if (g_costs.find(neighbor) == g_costs.end() || tentative_g < g_costs[neighbor]) {
+            if (g_costs.find(neighbor) == g_costs.end() || tentative_g < g_costs[neighbor]) 
+            {
                 g_costs[neighbor] = tentative_g;
                 float f = tentative_g + Heuristic(neighbor, goal);
                 pathCache[neighbor] = current.pos;
@@ -262,5 +281,7 @@ std::vector<std::pair<int, int>> Search::AStar(const Map& map, std::pair<int, in
             }
         }
     }
-    return {}; // No encontrado
+    
+    std::cout << "Ruta no encontrada." << std::endl;
+    return {};
 }
