@@ -32,10 +32,13 @@ int main(int argc, char *argv[])
     int opcion = 0;
     do 
     {
-        std::cout << "\n--- MENU DE BUSQUEDA DE RUTAS ---" << std::endl;
-        std::cout << "1. Busqueda BFS (Exploracion total)" << std::endl;
-        std::cout << "2. Busqueda Greedy (Heuristica Manhattan)" << std::endl;
-        std::cout << "3. Salir" << std::endl;
+        std::cout << "\n--- MENU PRINCIPAL ---\n";
+        std::cout << "Coordenadas actuales: Inicio(" << start_x << "," << start_y << ") Destino(" << goal_x << "," << goal_y << ")\n";
+        std::cout << "1. Cambiar Coordenadas\n";
+        std::cout << "2. BFS (8-conectado)\n";
+        std::cout << "3. Greedy BFS\n";
+        std::cout << "4. A* (A-Star)\n";
+        std::cout << "5. Salir\n";
         std::cout << "Seleccione una opcion: ";
         std::cin >> opcion;
 
@@ -44,12 +47,19 @@ int main(int argc, char *argv[])
         switch (opcion) //Cada opcion ejecuta un algoritmo distinto
         {
             case 1:
+                std::cout << "Nuevo Inicio (x y): "; std::cin >> start_x >> start_y;
+                std::cout << "Nuevo Destino (x y): "; std::cin >> goal_x >> goal_y;
+                continue;
+            case 2:
                 path = Search::BFS(map, {start_x, start_y}, {goal_x, goal_y});
                 break;
-            case 2:
+            case 3:
                 path = Search::Greedy(map, {start_x, start_y}, {goal_x, goal_y});
                 break;
-            case 3:
+            case 4:
+                path = Search::AStar(map, {start_x, start_y}, {goal_x, goal_y});
+                break;
+            case 5:
                 std::cout << "Saliendo del programa..." << std::endl;
                 continue; 
             default:
@@ -57,17 +67,16 @@ int main(int argc, char *argv[])
                 continue;
         }
 
-        if (!path.empty()) //Si se encontro un camino, se imprime en consola
+        if (!path.empty()) 
         {
-            std::cout << "\nMapa con la ruta encontrada:" << std::endl;
-            colorMap.print(path);
-            std::cout << "Distancia: " << (path.size() - 1) << " pasos." << std::endl;
-        } else //Si no se encontro un camino, se da este mensaje
-        {
-            std::cout << "\nNo se encontro un camino posible." << std::endl;
-        }
+        colorMap.print(path);
+        std::cout << "Ruta encontrada. Nodos en el camino: " << path.size() << std::endl;
+    } else if (opcion != 5) 
+    {
+        std::cout << "No se encontro ruta.\n";
+    }
 
-    } while (opcion != 3);
+    } while (opcion != 5);
 
     return 0;
 }

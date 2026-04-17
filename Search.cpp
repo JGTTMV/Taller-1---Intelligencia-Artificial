@@ -212,3 +212,55 @@ std::vector<std::pair<int, int>> Search::Greedy(const Map& map, std::pair<int, i
     std::cout << "NOT FOUND!!!!\n";
     return {};
 }
+
+std::vector<std::pair<int, int>> Search::AStar(const Map& map, std::pair<int, int> start, std::pair<int, int> goal) {
+    auto startTime = std::chrono::high_resolution_clock::now();
+
+    struct AStarNode {
+        std::pair<int, int> pos;
+        float g, f;
+        bool operator>(const AStarNode& other) const { return f > other.f; }
+    };
+
+    std::priority_queue<AStarNode, std::vector<AStarNode>, std::greater<AStarNode>> OPEN;
+    std::unordered_map<std::pair<int, int>, std::pair<int, int>> pathCache;
+    std::unordered_map<std::pair<int, int>, float> g_costs;
+
+    OPEN.push({start, 0.0f, Heuristic(start, goal)});
+    g_costs[start] = 0.0f;
+
+    // 8 Direcciones: Ortogonales y Diagonales
+    std::vector<std::pair<int, int>> dirs = {
+        {0, 1}, {0, -1}, {1, 0}, {-1, 0},   // Ortogonales
+        {1, 1}, {1, -1}, {-1, 1}, {-1, -1}  // Diagonales
+    };
+
+    while (!OPEN.empty()) {
+        AStarNode current = OPEN.top();
+        OPEN.pop();
+
+        if (current.pos == goal) {
+            auto endTime = std::chrono::high_resolution_clock::now();
+            return reconstruct(pathCache, goal);
+        }
+
+        for (auto dir : dirs) {
+            std::pair<int, int> neighbor = {current.pos.first + dir.first, current.pos.second + dir.second};
+
+            if (!map.isValidCordinates(neighbor.first, neighbor.second) || map._map[neighbor.first][neighbor.second] == 1)
+                continue;
+
+            // Determinar costo: 1.0 si es recto, 1.41 si es diagonal
+            float moveCost = (dir.first != 0 && dir.second != 0) ? 1.414f : 1.0f;
+            float tentative_g = g_costs[current.pos] + moveCost;
+
+            if (g_costs.find(neighbor) == g_costs.end() || tentative_g < g_costs[neighbor]) {
+                g_costs[neighbor] = tentative_g;
+                float f = tentative_g + Heuristic(neighbor, goal);
+                pathCache[neighbor] = current.pos;
+                OPEN.push({neighbor, tentative_g, f});
+            }
+        }
+    }
+    return {}; // No encontrado
+}
