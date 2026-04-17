@@ -4,7 +4,7 @@
 
 
 /*
-rojo 31
+rojo 31 
 verde 32
 amarillo 33
 azul 34

@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
     ColorMap colorMap(map);
 
     if (!map.isValidCordinates(start_x, start_y) || !map.isValidCordinates(goal_x, goal_y)) 
-    {
+    { 
         std::cerr << "Error: Coordenadas fuera de los límites del mapa." << std::endl;
         return 1;
     }
