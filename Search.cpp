@@ -22,13 +22,7 @@ namespace std
 	};
 }
 
-//Actualiza el vector de direcciones para incluir diagonales
-std::vector<std::pair<int, int>> dirs = 
-{
-    {0, 1}, {0, -1}, {1, 0}, {-1, 0},   // Ortogonales
-    {1, 1}, {1, -1}, {-1, 1}, {-1, -1}  // Diagonales
-};
-
+//reconstruct
 std::vector<std::pair<int,int>> Search::reconstruct(const std::unordered_map<std::pair<int,int>,std::pair<int,int>> &pathCache, const std::pair<int,int> &start){
 	std::deque<std::pair<int,int>> nodes;
 	auto node = start;  //crea una copia
@@ -58,12 +52,18 @@ std::vector<std::pair<int,int>> Search::BFS(const Map& map, std::pair<int,int> s
 	auto startTime = std::chrono::high_resolution_clock::now();
 
     //guarda direcciones de movimiento: arriba, derecha, abajo, izquierda
-    std::pair<int,int> dirs[]{{-1,0},{0,1},{1,0},{0,-1}};
+    std::vector<std::pair<int,int>> dirs = 
+    {
+    {0,1}, {0,-1}, {1,0}, {-1,0},
+    {1,1}, {1,-1}, {-1,1}, {-1,-1}
+    };
 
     std::vector<std::vector<bool>> visited(map.h, std::vector<bool>(map.w, false));
     
     std::queue<std::pair<int,int>> OPEN;
     std::unordered_map<std::pair<int,int>,std::pair<int,int>> pathCache;    //guarda de donde viene cada nodo para poder reconstruir el camino al final
+
+    int visitedCount = 0;
 
     //inserta el nodo inicial en la cola y marcalo como visitado
     OPEN.push(start);
@@ -74,6 +74,7 @@ std::vector<std::pair<int,int>> Search::BFS(const Map& map, std::pair<int,int> s
         //saca el nodo al frente de la cola
         auto pos=OPEN.front();
         OPEN.pop();
+        visitedCount++;
 
         //si es el nodo objetivo, reconstruye el camino y regresa el resultado
 		if(pos==goal)
@@ -133,11 +134,12 @@ std::vector<std::pair<int,int>> Search::BFS(const Map& map, std::pair<int,int> s
     return path;
 }
 
-//Implementacion de la Heuristica (Distancia Manhattan)
+//Implementacion de la Heuristica 
 float Search::Heuristic(std::pair<int, int> start, std::pair<int, int> goal) 
 {
-    //Distancia Manhattan = |x1 - x2| + |y1 - y2|
-    return std::abs(start.first - goal.first) + std::abs(start.second - goal.second);
+    float dx = std::abs(start.first - goal.first);
+    float dy = std::abs(start.second - goal.second);
+    return (dx + dy) + (1.4142f - 2) * std::min(dx, dy);
 }
 
 //estructura auxiliar para la Priority Queue (Cola de prioridad)
@@ -163,8 +165,13 @@ std::vector<std::pair<int, int>> Search::Greedy(const Map& map, std::pair<int, i
     std::unordered_map<std::pair<int,int>, std::pair<int,int>> pathCache;
     std::vector<std::vector<bool>> visited(map.h, std::vector<bool>(map.w, false));
 
-    std::vector<std::pair<int,int>> dirs = {{-1,0}, {1,0}, {0,-1}, {0,1}};
+    std::vector<std::pair<int,int>> dirs = 
+    {
+    {0,1}, {0,-1}, {1,0}, {-1,0},
+    {1,1}, {1,-1}, {-1,1}, {-1,-1}
+    };
 
+    int visitedCount = 0;
     auto startTime = std::chrono::high_resolution_clock::now();
 
     //inserta el nodo inicial en la cola y lo marca como visitado
@@ -178,22 +185,16 @@ std::vector<std::pair<int, int>> Search::Greedy(const Map& map, std::pair<int, i
         OPEN.pop();
         std::pair<int,int> pos = currentRecord.pos;
 
+        visitedCount++;
+
         //si se llega a la meta
         if(pos == goal)
         {
             auto endTime = std::chrono::high_resolution_clock::now();
-            int count = 0;
-            for(int i = 0; i < map.h; i++)
-            {
-                for(int j = 0; j < map.w; j++)
-                {
-                    if(visited[i][j]) count++;
-                }
-            }
-            std::cout << "VISITED: " << count << std::endl;
+
+            std::cout << "VISITED: " << visitedCount << std::endl;
             std::cout << "OPEN: " << OPEN.size() << std::endl;
             std::cout << "FOUND in " << std::chrono::duration<double, std::milli>(endTime-startTime).count() << "ms\n";
-            std::cout << "Dist: " << reconstruct(pathCache, pos).size() - 1 << std::endl; //imprime la distancia
             
             return reconstruct(pathCache, pos);
         }
@@ -237,27 +238,41 @@ std::vector<std::pair<int, int>> Search::AStar(const Map& map, std::pair<int, in
     std::priority_queue<AStarNode, std::vector<AStarNode>, std::greater<AStarNode>> OPEN;
     std::unordered_map<std::pair<int, int>, std::pair<int, int>> pathCache;
     std::unordered_map<std::pair<int, int>, float> g_costs;
+    std::unordered_map<std::pair<int, int>, bool> closed; 
 
     OPEN.push({start, 0.0f, Heuristic(start, goal)});
     g_costs[start] = 0.0f;
 
-    std::vector<std::pair<int, int>> dirs = {{0,1},{0,-1},{1,0},{-1,0},{1,1},{1,-1},{-1,1},{-1,-1}};
+    std::vector<std::pair<int,int>> dirs = {
+        {0,1},{0,-1},{1,0},{-1,0},
+        {1,1},{1,-1},{-1,1},{-1,-1}
+    };
+    
+    int visitedCount = 0;
+
+    OPEN.push({start, 0.0f, Heuristic(start, goal)});
+    g_costs[start] = 0.0f;
 
     while (!OPEN.empty()) 
     {
         AStarNode current = OPEN.top();
         OPEN.pop();
 
+        if(closed[current.pos]) continue;   
+        closed[current.pos] = true;
+
+        visitedCount++;
+
         if (current.pos == goal) 
         {
-            //finaliza medicion al encontrar la meta
             auto endTime = std::chrono::high_resolution_clock::now();
-            double duration = std::chrono::duration<double, std::milli>(endTime - startTime).count();
-            
-            std::cout << "\n[A*] Resultados:" << std::endl;
-            std::cout << "- Tiempo de ejecucion: " << duration << " ms" << std::endl;
-            std::cout << "- Costo total (G): " << g_costs[goal] << std::endl;
-            
+
+            std::cout << "[A*] Tiempo: " 
+                      << std::chrono::duration<double, std::milli>(endTime-startTime).count() 
+                      << " ms\n";
+            std::cout << "VISITED: " << visitedCount << std::endl;
+            std::cout << "Costo total: " << g_costs[goal] << std::endl;
+
             return reconstruct(pathCache, goal);
         }
 
