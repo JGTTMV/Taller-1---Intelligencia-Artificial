@@ -300,3 +300,5 @@ std::vector<std::pair<int, int>> Search::AStar(const Map& map, std::pair<int, in
     std::cout << "Ruta no encontrada." << std::endl;
     return {};
 }
+
+//1
