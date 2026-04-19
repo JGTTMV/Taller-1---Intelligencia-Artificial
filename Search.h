@@ -13,6 +13,6 @@ public:
     static std::vector<std::pair<int,int>> BFS(const Map& map, std::pair<int,int> start, std::pair<int,int> goal);
     static std::vector<std::pair<int, int>> Greedy(const Map& map, std::pair<int, int> start, std::pair<int, int> goal);
     static std::vector<std::pair<int, int>> AStar(const Map& map, std::pair<int, int> start, std::pair<int, int> goal);
-    //static std::vector<std::pair<int, int>> WeightedAStar(const Map& map, std::pair<int, int> start, std::pair<int, int> goal, float w);
+    static std::vector<std::pair<int, int>> WeightedAStar(const Map& map, std::pair<int, int> start, std::pair<int, int> goal,float w);
     static float Heuristic(std::pair<int, int> start, std::pair<int, int> goal);
 };

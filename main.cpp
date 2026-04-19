@@ -38,7 +38,8 @@ int main(int argc, char *argv[])
         std::cout << "2. BFS (8-conectado)\n";
         std::cout << "3. Greedy BFS\n";
         std::cout << "4. A* (A-Star)\n";
-        std::cout << "5. Salir\n";
+        std::cout << "5. Weighted A*\n";
+        std::cout << "6. Salir\n";
         std::cout << "Seleccione una opcion: ";
         std::cin >> opcion;
 
@@ -60,8 +61,16 @@ int main(int argc, char *argv[])
                 path = Search::AStar(map, {start_x, start_y}, {goal_x, goal_y});
                 break;
             case 5:
-                std::cout << "Saliendo del programa..." << std::endl;
-                continue; 
+            {
+                float w;
+                std::cout << "Ingrese peso (ej: 1.5): ";
+                std::cin >> w;
+                path = Search::WeightedAStar(map, {start_x, start_y}, {goal_x, goal_y}, w);
+                break;
+            }
+            case 6:
+                std::cout << "Saliendo...\n";
+                continue;
             default:
                 std::cout << "Opcion no valida." << std::endl;
                 continue;

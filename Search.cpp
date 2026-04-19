@@ -1,7 +1,7 @@
 #include "Search.h"
 #include <queue>
 #include <chrono>
-#include <unordered_map>
+#include <unordered_map>    
 #include <iostream>
 #include <limits>
 #include <cmath>
@@ -219,6 +219,90 @@ std::vector<std::pair<int, int>> Search::Greedy(const Map& map, std::pair<int, i
         }
     }
     std::cout << "NOT FOUND!!!!\n";
+    return {};
+}
+
+std::vector<std::pair<int, int>> Search::WeightedAStar(
+    const Map& map, 
+    std::pair<int, int> start, 
+    std::pair<int, int> goal,
+    float w)
+{
+    auto startTime = std::chrono::high_resolution_clock::now();
+
+    struct Node 
+    {
+        std::pair<int, int> pos;
+        float g, f;
+        bool operator>(const Node& other) const { return f > other.f; }
+    };
+
+    std::priority_queue<Node, std::vector<Node>, std::greater<Node>> OPEN;
+    std::unordered_map<std::pair<int, int>, std::pair<int, int>> pathCache;
+    std::unordered_map<std::pair<int, int>, float> g_costs;
+    std::unordered_map<std::pair<int, int>, bool> closed;
+
+    std::vector<std::pair<int,int>> dirs = {
+        {0,1},{0,-1},{1,0},{-1,0},
+        {1,1},{1,-1},{-1,1},{-1,-1}
+    };
+
+    int visitedCount = 0;
+
+    OPEN.push({start, 0.0f, w * Heuristic(start, goal)});
+    g_costs[start] = 0.0f;
+
+    while (!OPEN.empty()) 
+    {
+        Node current = OPEN.top();
+        OPEN.pop();
+
+        if(closed[current.pos]) continue;
+        closed[current.pos] = true;
+
+        visitedCount++;
+
+        if (current.pos == goal) 
+        {
+            auto endTime = std::chrono::high_resolution_clock::now();
+
+            std::cout << "[WA*] Peso: " << w << std::endl;
+            std::cout << "Tiempo: " 
+                      << std::chrono::duration<double, std::milli>(endTime-startTime).count() 
+                      << " ms\n";
+            std::cout << "VISITED: " << visitedCount << std::endl;
+            std::cout << "Costo total: " << g_costs[goal] << std::endl;
+
+            return reconstruct(pathCache, goal);
+        }
+
+        for (auto dir : dirs) 
+        {
+            std::pair<int, int> neighbor = {
+                current.pos.first + dir.first, 
+                current.pos.second + dir.second
+            };
+
+            if (!map.isValidCordinates(neighbor.first, neighbor.second) || 
+                map._map[neighbor.first][neighbor.second] == 1)
+                continue;
+
+            float moveCost = (dir.first != 0 && dir.second != 0) ? 1.4142f : 1.0f;
+            float tentative_g = g_costs[current.pos] + moveCost;
+
+            if (g_costs.find(neighbor) == g_costs.end() || tentative_g < g_costs[neighbor]) 
+            {
+                g_costs[neighbor] = tentative_g;
+
+                float f = tentative_g + w * Heuristic(neighbor, goal);
+
+                pathCache[neighbor] = current.pos;
+                OPEN.push({neighbor, tentative_g, f});
+            }
+        }
+    }
+
+    std::cout << "Ruta no encontrada." << std::endl;
     return {};
 }
 
