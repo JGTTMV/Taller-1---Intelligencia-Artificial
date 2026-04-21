@@ -62,6 +62,7 @@ int main(int argc, char *argv[])
                 break;
             case 5:
             {
+                //Toma el peso de Weighted A*
                 float w;
                 std::cout << "Ingrese peso (ej: 1.5): ";
                 std::cin >> w;
@@ -80,12 +81,12 @@ int main(int argc, char *argv[])
         {
         colorMap.print(path);
         std::cout << "Ruta encontrada. Nodos en el camino: " << path.size() << std::endl;
-    } else if (opcion != 5) 
+    } else if (opcion != 6) 
     {
         std::cout << "No se encontro ruta.\n";
     }
 
-    } while (opcion != 5);
+    } while (opcion != 6);
 
     return 0;
 }
