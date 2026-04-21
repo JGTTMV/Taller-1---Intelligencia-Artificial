@@ -79,19 +79,11 @@ SearchResult Search::BFS(const Map& map, std::pair<int,int> start, std::pair<int
 		if(pos==goal)
         {
 			auto endTime = std::chrono::high_resolution_clock::now();
-			int count=0;
-            for(int i=0;i<map.h;i++)
-            {
-                for(int j=0;j<map.w;j++)
-                {
-                    if(visited[i][j])count++;
-                }
-            }
             
             return 
             {
                 reconstruct(pathCache, pos),
-                count,
+                visitedCount,
                 (int)OPEN.size(),
                 std::chrono::duration<double, std::milli>(endTime-startTime).count(),
                 0.0f,
