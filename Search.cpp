@@ -46,9 +46,8 @@ std::vector<std::pair<int,int>> Search::reconstruct(const std::unordered_map<std
 }
 
 //1. Implementacion de BFS (Breadth-First Search)
-std::vector<std::pair<int,int>> Search::BFS(const Map& map, std::pair<int,int> start, std::pair<int,int> goal)
+SearchResult Search::BFS(const Map& map, std::pair<int,int> start, std::pair<int,int> goal)
 {
-    std::cout<<"===========================\nRunning BFS...\n";
 	auto startTime = std::chrono::high_resolution_clock::now();
 
     //guarda direcciones de movimiento: arriba, derecha, abajo, izquierda
@@ -88,11 +87,17 @@ std::vector<std::pair<int,int>> Search::BFS(const Map& map, std::pair<int,int> s
                     if(visited[i][j])count++;
                 }
             }
-            std::cout<<"VISITED: "<<count<<std::endl;
-			std::cout<<"OPEN: "<<OPEN.size()<<std::endl;
-            std::cout<<"FOUND in "<<std::chrono::duration<double, std::milli>(endTime-startTime).count()<<"ms\n";
-			
-            return reconstruct(pathCache,pos);
+            
+            return 
+            {
+                reconstruct(pathCache, pos),
+                count,
+                (int)OPEN.size(),
+                std::chrono::duration<double, std::milli>(endTime-startTime).count(),
+                0.0f,
+                0.0f,
+                true
+            };
 		}
 
 		for(auto dir:dirs){
@@ -122,14 +127,18 @@ std::vector<std::pair<int,int>> Search::BFS(const Map& map, std::pair<int,int> s
             pathCache[child]=pos;
 		}
 	}
-	std::cout<<"NOT FOUND!!!!\n";
     
-    //se regresa un vector con el nodo inicial y el nodo objetivo para que el programa no falle al intentar imprimir el camino encontrado
-    //aunque no sea un camino válido
-    std::vector<std::pair<int,int>> path;
-    path.push_back(start);
-    path.push_back(goal);
-    return path;
+    //se regresa un SearchResult indicando que no se encontró camino
+    return 
+    {
+        {},
+        visitedCount,
+        (int)OPEN.size(),
+        0.0,
+        0.0f,
+        0.0f,
+        false
+    };
 }
 
 //Implementacion de la Heuristica 
@@ -156,7 +165,7 @@ struct NodeRecord
 };
 
 // 3. Implementación del Algoritmo Greedy
-std::vector<std::pair<int, int>> Search::Greedy(const Map& map, std::pair<int, int> start, std::pair<int, int> goal) 
+SearchResult Search::Greedy(const Map& map, std::pair<int, int> start, std::pair<int, int> goal) 
 {
     //declaramos nuestra Priority Queue usando la estructura que creamos
     std::priority_queue<NodeRecord, std::vector<NodeRecord>, std::greater<NodeRecord>> OPEN;
@@ -190,15 +199,21 @@ std::vector<std::pair<int, int>> Search::Greedy(const Map& map, std::pair<int, i
         {
             auto endTime = std::chrono::high_resolution_clock::now();
 
-            std::cout << "VISITED: " << visitedCount << std::endl;
-            std::cout << "OPEN: " << OPEN.size() << std::endl;
-            std::cout << "FOUND in " << std::chrono::duration<double, std::milli>(endTime-startTime).count() << "ms\n";
-            
-            return reconstruct(pathCache, pos);
+            return
+            {
+                reconstruct(pathCache, pos),
+                visitedCount,
+                (int)OPEN.size(),
+                std::chrono::duration<double, std::milli>(endTime-startTime).count(),
+                0.0f,
+                0.0f,
+                true
+            };
         }
 
         //expande a los vecinos
-        for(auto dir : dirs){
+        for(auto dir : dirs)
+        {
             std::pair<int,int> child = pos;
             child.first += dir.first;
             child.second += dir.second;
@@ -206,7 +221,8 @@ std::vector<std::pair<int, int>> Search::Greedy(const Map& map, std::pair<int, i
             //si las coordenadas son invalidas, si es un muro (1) o si ya fue visitado, se ignora
             if(!map.isValidCordinates(child.first, child.second) || 
                map._map[child.first][child.second] == 1 || 
-               visited[child.first][child.second]){
+               visited[child.first][child.second])
+               {
                 continue;
             }
             
@@ -216,12 +232,21 @@ std::vector<std::pair<int, int>> Search::Greedy(const Map& map, std::pair<int, i
             OPEN.push({child, Heuristic(child, goal)});
         }
     }
-    std::cout << "NOT FOUND!!!!\n";
-    return {};
+    
+    return 
+    {
+        {},
+        visitedCount,
+        (int)OPEN.size(),
+        0.0,
+        0.0f,
+        0.0f,
+        false
+    };
 }
 
 // 4. Implementación del Algoritmo A*
-std::vector<std::pair<int, int>> Search::AStar(const Map& map, std::pair<int, int> start, std::pair<int, int> goal) {
+SearchResult Search::AStar(const Map& map, std::pair<int, int> start, std::pair<int, int> goal) {
     
     //inicia medicion de tiempo
     auto startTime = std::chrono::high_resolution_clock::now();
@@ -237,9 +262,6 @@ std::vector<std::pair<int, int>> Search::AStar(const Map& map, std::pair<int, in
     std::unordered_map<std::pair<int, int>, std::pair<int, int>> pathCache;
     std::unordered_map<std::pair<int, int>, float> g_costs;
     std::unordered_map<std::pair<int, int>, bool> closed; 
-
-    OPEN.push({start, 0.0f, Heuristic(start, goal)});
-    g_costs[start] = 0.0f;
 
     std::vector<std::pair<int,int>> dirs = {
         {0,1},{0,-1},{1,0},{-1,0},
@@ -265,11 +287,16 @@ std::vector<std::pair<int, int>> Search::AStar(const Map& map, std::pair<int, in
         {
             auto endTime = std::chrono::high_resolution_clock::now();
 
-            std::cout << "Costo total: " << g_costs[goal] << std::endl;
-            std::cout << "VISITED: " << visitedCount << std::endl;
-            std::cout << "FOUND in: " << std::chrono::duration<double, std::milli>(endTime-startTime).count() << " ms\n";
-
-            return reconstruct(pathCache, goal);
+            return 
+            {
+                reconstruct(pathCache, goal),
+                visitedCount,
+                (int)OPEN.size(),
+                std::chrono::duration<double, std::milli>(endTime-startTime).count(),
+                g_costs[goal],
+                0.0f,
+                true
+            };
         }
 
         //expande a los vecinos
@@ -296,12 +323,20 @@ std::vector<std::pair<int, int>> Search::AStar(const Map& map, std::pair<int, in
         }
     }
     
-    std::cout << "Ruta no encontrada." << std::endl;
-    return {};
+    return 
+    {
+        {},
+        visitedCount,
+        (int)OPEN.size(),
+        0.0,
+        0.0f,
+        0.0f,
+        false
+    };
 }
 
 // 5. Implementación del Algoritmo Weighted A*
-std::vector<std::pair<int, int>> Search::WeightedAStar(const Map& map, std::pair<int, int> start, std::pair<int, int> goal,float w)
+SearchResult Search::WeightedAStar(const Map& map, std::pair<int, int> start, std::pair<int, int> goal,float w)
 {
     auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -342,13 +377,15 @@ std::vector<std::pair<int, int>> Search::WeightedAStar(const Map& map, std::pair
         {
             auto endTime = std::chrono::high_resolution_clock::now();
 
-            //A diferencia del A*, aqui imprimimos el peso usado para la heuristica
-            std::cout << "[WA*] Peso: " << w << std::endl;
-            std::cout << "Costo total: " << g_costs[goal] << std::endl;
-            std::cout << "VISITED: " << visitedCount << std::endl;
-            std::cout << "FOUND in: " << std::chrono::duration<double, std::milli>(endTime-startTime).count() << " ms\n";
-
-            return reconstruct(pathCache, goal);
+            return {
+                reconstruct(pathCache, goal),
+                visitedCount,
+                (int)OPEN.size(),
+                std::chrono::duration<double, std::milli>(endTime-startTime).count(),
+                g_costs[goal],
+                w,
+                true
+            };
         }
 
         for (auto dir : dirs) 
@@ -377,6 +414,14 @@ std::vector<std::pair<int, int>> Search::WeightedAStar(const Map& map, std::pair
         }
     }
 
-    std::cout << "Ruta no encontrada." << std::endl;
-    return {};
+    return 
+    {
+        {},
+        visitedCount,
+        (int)OPEN.size(),
+        0.0,
+        0.0f,
+        w,
+        false
+    };
 }

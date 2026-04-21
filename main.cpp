@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
         std::cout << "Seleccione una opcion: ";
         std::cin >> opcion;
 
-        std::vector<std::pair<int, int>> path;
+        SearchResult result;
 
         switch (opcion) //cada opcion ejecuta un algoritmo distinto
         {
@@ -52,21 +52,21 @@ int main(int argc, char *argv[])
                 std::cout << "Nuevo Destino (x y): "; std::cin >> goal_x >> goal_y;
                 continue;
             case 2:
-                path = Search::BFS(map, {start_x, start_y}, {goal_x, goal_y});
+                result = Search::BFS(map, {start_x, start_y}, {goal_x, goal_y});
                 break;
             case 3:
-                path = Search::Greedy(map, {start_x, start_y}, {goal_x, goal_y});
+                result = Search::Greedy(map, {start_x, start_y}, {goal_x, goal_y});
                 break;
             case 4:
-                path = Search::AStar(map, {start_x, start_y}, {goal_x, goal_y});
+                result = Search::AStar(map, {start_x, start_y}, {goal_x, goal_y});
                 break;
             case 5:
             {
-                //Toma el peso de Weighted A*
+                //toma el peso de Weighted A*
                 float w;
                 std::cout << "Ingrese peso (ej: 1.5): ";
                 std::cin >> w;
-                path = Search::WeightedAStar(map, {start_x, start_y}, {goal_x, goal_y}, w);
+                result = Search::WeightedAStar(map, {start_x, start_y}, {goal_x, goal_y}, w);
                 break;
             }
             case 6:
@@ -77,14 +77,35 @@ int main(int argc, char *argv[])
                 continue;
         }
 
-        if (!path.empty()) 
+        if (result.found) 
         {
-        colorMap.print(path);
-        std::cout << "Ruta encontrada. Nodos en el camino: " << path.size() << std::endl;
-    } else if (opcion != 6) 
-    {
-        std::cout << "No se encontro ruta.\n";
-    }
+            //imprime el mapa primero
+            colorMap.print(result.path);
+            
+            //luego imprime las estadisticas de ejecución
+            std::cout << "\n=====================================\n";
+            std::cout << "Nodos en el camino: " << result.path.size() << std::endl;
+            std::cout << "Nodos visitados: " << result.visitedCount << std::endl;
+            std::cout << "Nodos OPEN: " << result.openSize << std::endl;
+            std::cout << "Tiempo de ejecucion: " << result.executionTime << " ms" << std::endl;
+            
+            //imprime costo total si aplica (para A* y Weighted A*)
+            if (result.totalCost > 0.0f)
+            {
+                std::cout << "Costo total del camino: " << result.totalCost << std::endl;
+            }
+            
+            //imprime el peso si es Weighted A*
+            if (result.weight > 0.0f)
+            {
+                std::cout << "Peso heurístico (w): " << result.weight << std::endl;
+            }
+            std::cout << "=====================================\n";
+        } 
+        else if (opcion != 6) 
+        {
+            std::cout << "No se encontro ruta.\n";
+        }
 
     } while (opcion != 6);
 
